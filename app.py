@@ -13,10 +13,21 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 🛠️ ฟังก์ชันการทำงานของ AI Image Engine (แปลภาษา + เจนภาพ)
+# 🧠 ระบบ Session State (ช่วยจำค่าผลลัพธ์ไม่ให้รูปหายเวลากด Sidebar)
+# ---------------------------------------------------------
+if "generated" not in st.session_state:
+    st.session_state.generated = False
+if "caption" not in st.session_state:
+    st.session_state.caption = ""
+if "image_url" not in st.session_state:
+    st.session_state.image_url = ""
+if "art_style_used" not in st.session_state:
+    st.session_state.art_style_used = ""
+
+# ---------------------------------------------------------
+# 🛠️ ฟังก์ชันแปลงภาษา & เจนรูปภาพ AI
 # ---------------------------------------------------------
 def translate_th_to_en(text_th):
-    """แปลคำค้นหาภาษาไทยเป็นภาษาอังกฤษเพื่อส่งให้ FLUX AI (รองรับทุกคำค้นหาฟรี 100%)"""
     try:
         url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=th&tl=en&dt=t&q={urllib.parse.quote(text_th)}"
         response = requests.get(url, timeout=5)
@@ -28,13 +39,9 @@ def translate_th_to_en(text_th):
     return text_th
 
 def generate_ai_image_url(topic_th, art_style):
-    """แปลหัวข้อและรวมเข้ากับ Prompt สไตล์ภาพเพื่อส่งยิงไปที่ FLUX AI"""
     seed = random.randint(1, 999999)
-    
-    # 🌐 1. แปลภาษาไทยเป็นอังกฤษอัตโนมัติ (เช่น "รองเท้าวิ่ง" -> "Running shoes")
     topic_en = translate_th_to_en(topic_th)
     
-    # 🖼️ 2. ประกอบ Prompt ภาษาอังกฤษตามสไตล์ภาพที่เลือก
     if "3D" in art_style:
         full_prompt = f"3d commercial studio render of {topic_en}, professional product presentation, vibrant studio lighting, clean render, 8k resolution"
     elif "Realistic" in art_style:
@@ -115,7 +122,6 @@ with st.sidebar:
 st.title("🚀 AI Content & Marketing Automation")
 st.caption("ระบบช่วยคิดคอนเทนต์ คำนวณความน่าสนใจ และเจนรูปภาพประกอบอัตโนมัติสำหรับธุรกิจ")
 
-# กำหนดค่าเริ่มต้นตาม Preset แบรนด์
 default_topic = "กาแฟเพื่อสุขภาพ"
 if brand_preset == "☕ Cafe & Bakery":
     default_topic = "กาแฟสกัดเย็นเมล็ดอาราบิก้า"
@@ -135,7 +141,7 @@ with col_input2:
     generate_btn = st.button("✨ เจนคอนเทนต์สด", type="primary", use_container_width=True)
 
 # ---------------------------------------------------------
-# 🤖 4. โลจิกประมวลผลและการแสดงผล
+# 🤖 4. โลจิกเมื่อกดปุ่ม "เจนคอนเทนต์สด"
 # ---------------------------------------------------------
 if generate_btn:
     if not topic.strip():
@@ -148,11 +154,9 @@ if generate_btn:
             time.sleep(0.3)
             st.write(f"📝 2. ร่างแคปชัน และประมวลผล Hashtag สำหรับ {target_audience}...")
             
-            # ปรับแต่งคำตามระดับความทางการ
             emoji_prefix = "🔥✨" if formality_level <= 2 else ("📌" if formality_level == 3 else "▪️")
             polite_ending = "นะคร้าบ/ค่ะ 👇" if formality_level <= 2 else ("ครับ/ค่ะ 👇" if formality_level == 3 else "เรียนเชิญสอบถามรายละเอียดเพิ่มเติม")
 
-            # โลจิกแคปชัน
             if "1." in style_option:
                 caption = f"{emoji_prefix} **[สาระน่ารู้] {topic} ที่ {target_audience} ต้องรู้!**\n\nเคยสงสัยไหมครับว่า ทำไมเรื่อง '{topic}' ถึงกลายเป็นสิ่งสำคัญในตอนนี้?\n\nวันนี้สรุป 3 หัวใจสำคัญมาให้แล้ว {polite_ending}\n🔹 **1. จุดเด่น:** เข้าใจง่าย นำไปปรับใช้ได้ทันที\n🔹 **2. ตัวช่วยสำคัญ:** ลดเวลาทำงานลงกว่า 50%\n🔹 **3. ผลลัพธ์:** เพิ่มประสิทธิภาพอย่างชัดเจน\n\n👉 **สนใจสอบถาม:** {cta_type}\n\n#สาระน่ารู้ #{topic.replace(' ', '')} #การตลาดออนไลน์"
             elif "2." in style_option:
@@ -163,63 +167,73 @@ if generate_btn:
             st.write(f"🌐 3. แปลคำค้นหา และยิง FLUX AI เจนภาพสไตล์ '{img_art_style}'...")
             image_url = generate_ai_image_url(topic, img_art_style)
             
+            # 💾 บันทึกค่าลงใน Session State
+            st.session_state.generated = True
+            st.session_state.caption = caption
+            st.session_state.image_url = image_url
+            st.session_state.art_style_used = img_art_style
+            
             status_box.update(label="✅ สร้างโพสต์เรียบร้อยแล้ว!", state="complete", expanded=False)
 
-        st.divider()
+# ---------------------------------------------------------
+# 📱 5. ส่วนแสดงผลลัพธ์ (ดึงค่าจาก Session State มาโชว์)
+# ---------------------------------------------------------
+if st.session_state.generated:
+    st.divider()
 
-        # 📊 แถบสถิติวิเคราะห์จาก AI (Metrics Row)
-        st.subheader("📊 AI Analytics & Insights")
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric(label="📈 Engagement Potential", value="95.8%", delta="+14.2%")
-        m2.metric(label="🎯 Brand Alignment", value=f"Level {formality_level}/5", delta=brand_preset)
-        m3.metric(label="⏱️ Best Posting Time", value="18:30 น.", delta="Today")
-        m4.metric(label="🖼️ Image Engine", value=img_art_style.split()[0], delta="FLUX Active")
+    # 📊 แถบสถิติวิเคราะห์จาก AI
+    st.subheader("📊 AI Analytics & Insights")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric(label="📈 Engagement Potential", value="95.8%", delta="+14.2%")
+    m2.metric(label="🎯 Brand Alignment", value=f"Level {formality_level}/5", delta=brand_preset)
+    m3.metric(label="⏱️ Best Posting Time", value="18:30 น.", delta="Today")
+    m4.metric(label="🖼️ Image Engine", value=st.session_state.art_style_used.split()[0], delta="FLUX Active")
 
-        st.divider()
+    st.divider()
 
-        # 📱 พื้นที่แสดงผลหลายแพลตฟอร์ม (Multi-Platform Tabs)
-        st.subheader("📱 พรีวิวการแสดงผล (Multi-Platform Preview)")
+    # 📱 พื้นที่แสดงผลหลายแพลตฟอร์ม
+    st.subheader("📱 พรีวิวการแสดงผล (Multi-Platform Preview)")
+    
+    tab_fb, tab_ig, tab_line = st.tabs(["🔵 Facebook Post", "📸 Instagram Feed", "💬 LINE Official Account"])
+
+    # Tab 1: Facebook
+    with tab_fb:
+        col_fb_view, col_fb_tool = st.columns([1.5, 1])
+        with col_fb_view:
+            with st.container(border=True):
+                st.markdown(f"**{brand_preset if 'Custom' not in brand_preset else 'Demo Brand Official'}** · *เมื่อสักครู่นี้* 🌎")
+                st.markdown(st.session_state.caption)
+                
+                # แสดงรูปภาพจาก Session State (ไม่มีวันหายเวลากด Sidebar)
+                st.image(st.session_state.image_url, caption=f"ภาพประกอบ AI สไตล์: {st.session_state.art_style_used}", use_container_width=True)
         
-        tab_fb, tab_ig, tab_line = st.tabs(["🔵 Facebook Post", "📸 Instagram Feed", "💬 LINE Official Account"])
-
-        # Tab 1: Facebook
-        with tab_fb:
-            col_fb_view, col_fb_tool = st.columns([1.5, 1])
-            with col_fb_view:
-                with st.container(border=True):
-                    st.markdown(f"**{brand_preset if 'Custom' not in brand_preset else 'Demo Brand Official'}** · *เมื่อสักครู่นี้* 🌎")
-                    st.markdown(caption)
-                    # แสดงภาพจาก URL โดยตรง (ไม่ติด Timeout)
-                    st.image(image_url, caption=f"ภาพประกอบ AI สไตล์: {img_art_style}", use_container_width=True)
+        with col_fb_tool:
+            st.markdown("### 🛠️ เครื่องมือจัดการ")
+            st.text_area("📋 แคปชันสำหรับก๊อปปี้:", value=st.session_state.caption, height=180)
             
-            with col_fb_tool:
-                st.markdown("### 🛠️ เครื่องมือจัดการ")
-                st.text_area("📋 แคปชันสำหรับก๊อปปี้:", value=caption, height=180)
-                
-                # ปุ่มโหลดภาพ
-                img_bytes = download_image_bytes(image_url)
-                if img_bytes:
-                    st.download_button("📥 โหลดรูปภาพ AI (HD)", data=img_bytes, file_name="post_ai.jpg", mime="image/jpeg", use_container_width=True)
-                else:
-                    st.link_button("🔗 เปิดดู/เซฟรูปขนาดเต็ม (HD)", image_url, use_container_width=True)
-                
-                st.divider()
-                st.markdown("#### ⏰ ตั้งเวลาโพสต์ล่วงหน้า")
-                schedule_date = st.date_input("วันที่โพสต์:", datetime.now() + timedelta(days=1))
-                schedule_time = st.time_input("เวลาที่โพสต์:", datetime.strptime("18:30", "%H:%M").time())
-                
-                if st.button("🚀 อนุมัติและตั้งเวลาโพสต์", type="primary", use_container_width=True):
-                    st.success(f"บันทึกคิวโพสต์สำเร็จ! ระบบจะโพสต์อัตโนมัติในวันที่ {schedule_date} เวลา {schedule_time}")
+            img_bytes = download_image_bytes(st.session_state.image_url)
+            if img_bytes:
+                st.download_button("📥 โหลดรูปภาพ AI (HD)", data=img_bytes, file_name="post_ai.jpg", mime="image/jpeg", use_container_width=True)
+            else:
+                st.link_button("🔗 เปิดดู/เซฟรูปขนาดเต็ม (HD)", st.session_state.image_url, use_container_width=True)
+            
+            st.divider()
+            st.markdown("#### ⏰ ตั้งเวลาโพสต์ล่วงหน้า")
+            schedule_date = st.date_input("วันที่โพสต์:", datetime.now() + timedelta(days=1))
+            schedule_time = st.time_input("เวลาที่โพสต์:", datetime.strptime("18:30", "%H:%M").time())
+            
+            if st.button("🚀 อนุมัติและตั้งเวลาโพสต์", type="primary", use_container_width=True):
+                st.success(f"บันทึกคิวโพสต์สำเร็จ! ระบบจะโพสต์อัตโนมัติในวันที่ {schedule_date} เวลา {schedule_time}")
 
-        # Tab 2: Instagram
-        with tab_ig:
-            st.info("📸 ตัวอย่างหน้าตาการแสดงผลบน Instagram Feed")
-            st.image(image_url, width=420)
-            st.caption(caption[:120] + "...")
+    # Tab 2: Instagram
+    with tab_ig:
+        st.info("📸 ตัวอย่างหน้าตาการแสดงผลบน Instagram Feed")
+        st.image(st.session_state.image_url, width=420)
+        st.caption(st.session_state.caption[:120] + "...")
 
-        # Tab 3: LINE
-        with tab_line:
-            st.info("💬 ตัวอย่างหน้าตา Broadcast ข้อความบน LINE Official Account")
-            with st.chat_message("assistant"):
-                st.write(caption)
-                st.image(image_url, width=320)
+    # Tab 3: LINE
+    with tab_line:
+        st.info("💬 ตัวอย่างหน้าตา Broadcast ข้อความบน LINE Official Account")
+        with st.chat_message("assistant"):
+            st.write(st.session_state.caption)
+            st.image(st.session_state.image_url, width=320)
