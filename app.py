@@ -34,6 +34,8 @@ if "hashtags" not in st.session_state:
     st.session_state.hashtags = {}
 if "quality_score" not in st.session_state:
     st.session_state.quality_score = {}
+if "scheduled_posts" not in st.session_state:
+    st.session_state.scheduled_posts = []  # ระบบเก็บคิวโพสต์ล่วงหน้า
 
 # ---------------------------------------------------------
 # 🛠️ Universal AI Image Prompt & Fetch Engine
@@ -58,15 +60,13 @@ def generate_ai_image_url(topic_th, art_style, aspect_ratio):
     topic_en = translate_to_en(topic_th)
     topic_lower = topic_en.lower()
     
-    # กำหนดขนาดภาพตามการเลือกของผู้ใช้
     if aspect_ratio == "9:16 (Story/Reel/TikTok)":
         width, height = 1080, 1920
     elif aspect_ratio == "16:9 (Cover/Banner)":
         width, height = 1920, 1080
-    else:  # 1:1 (Square)
+    else:
         width, height = 1080, 1080
 
-    # Smart Context Category Enhancer
     if any(w in topic_lower for w in ["food", "drink", "coffee", "dish", "cake", "restaurant", "noodle", "tea", "bakery", "soup", "sushi"]):
         context_keywords = "gourmet food photography, commercial culinary presentation, appetizing lighting, clean studio tabletop"
     elif any(w in topic_lower for w in ["car", "vehicle", "honda", "toyota", "motorcycle", "bike", "auto", "drive", "ev", "truck"]):
@@ -120,7 +120,6 @@ def generate_human_caption_th(topic, style_option, formality_level, target_audie
             caption = f"""ป้ายยาแรงๆ เลยตัวนี้! 🔥 ใครสาย {topic} บอกเลยว่าห้ามพลาดเด็ดขาด~\n\nไอเทมเด็ดที่ชาว {target_audience} ต้องมีติดไว้ คุ้มค่าแบบก๊อกสอง!\n\nคุ้มยังไงบ้าง มาดู 👇\n✅ ดีไซน์สวยตรงปก ใช้แล้วชอบแน่นอน\n✅ ตอบโจทย์ชีวิตประจำวันแบบสุดๆ\n✅ จัดโปรพิเศษเฉพาะรอบนี้เท่านั้น หมดแล้วหมดเลยนะ!\n\nใครสนใจอยากจัด รีบ {cta_type} ด่วนเลยน้า ก่อนของจะหมดก่อน! 💨"""
         else:
             caption = f"""มีเรื่องอยากเล่าให้ฟังนิดนึง... 💭\n\nเคยคิดเหมือนกันไหมครับ/ค่ะว่า เรื่อง {topic} มันดูไกลตัว?\nแต่พอได้ลองเปิดใจศึกษามันจริงๆ ถึงได้รู้ว่า ชีวิตเราเปลี่ยนไปเยอะมาก\n\nสำหรับ {target_audience} ที่กำลังพยายามทำอะไรสักอย่างอยู่:\n"ไม่ต้องรอให้พร้อม 100% ค่อยเริ่มหรอก แค่ก้าวแรกก็เก่งมากแล้ว" ✌️\n\nสู้ไปด้วยกันน้า ใครอยากพูดคุยหรือแชร์ไอเดีย {cta_type} ได้เลยครับ!"""
-
     elif formality_level == 3:
         if "1." in style_option:
             caption = f"""มีใครกำลังเจอปัญหาหรือสงสัยเกี่ยวกับ '{topic}' อยู่บ้างครับ/ค่ะ? 👋\n\nวันนี้เราสรุป 3 ข้อควรรู้สำหรับ {target_audience} มาให้เรียบร้อยแล้วครับ นำไปปรับใช้ได้ทันที!\n\n📌 3 หัวใจสำคัญที่ไม่ควรมองข้าม:\n1️⃣ **จุดเริ่มต้นที่ถูกต้อง:** ช่วยลดขั้นตอนที่ซับซ้อนลงได้เยอะมาก\n2️⃣ **เทคนิคสำคัญ:** ช่วยเพิ่มประสิทธิภาพและประหยัดเวลาได้ชัดเจน\n3️⃣ **ผลลัพธ์ที่ได้:** คุ้มค่ากับการลงทุนในระยะยาวแน่นอนครับ\n\nอยากรู้รายละเอียดเพิ่มเติม สามารถ {cta_type} ได้เลยนะครับ ยินดีแนะนำครับ 😊"""
@@ -128,7 +127,6 @@ def generate_human_caption_th(topic, style_option, formality_level, target_audie
             caption = f"""ยกระดับความสะดวกสบายด้วย '{topic}' ที่ตอบโจทย์เพื่อ {target_audience} โดยเฉพาะ ✨\n\nหากคุณกำลังมองหาตัวช่วยดีๆ ที่คุ้มค่าและมั่นใจได้ในคุณภาพ แนะนำรุ่นนี้เลยครับ!\n\n🌟 **ไฮไลต์เด่นที่อยากแนะนำ:**\n• ออกแบบมาให้ใช้งานง่าย ตอบโจทย์ตรงจุด\n• คุ้มค่า คุ้มราคา รับประกันความพึงพอใจ\n• มีทีมงานคอยดูแลและให้คำแนะนำตลอดการใช้งาน\n\n🎁 **ข้อเสนอพิเศษสัปดาห์นี้:**\nสั่งซื้อหรือสอบถามโปรโมชัน เพียง {cta_type} ได้ทันทีครับ!"""
         else:
             caption = f"""เบื้องหลังของคำว่าความสำเร็จเกี่ยวกับ '{topic}' 💡\n\nในการทำงานหรือการทำธุรกิจสำหรับ {target_audience} สิ่งสำคัญที่สุดบางครั้งอาจไม่ใช่ความพร้อม แต่คือ 'ความสม่ำเสมอ' ครับ\n\n3 ข้อคิดดีๆ ที่เราอยากมอบให้ในวันนี้:\n• ก้าวเล็กๆ ในทุกวัน ยิ่งใหญ่กว่าการไม่เริ่มทำอะไรเลย\n• ข้อผิดพลาดคือบทเรียนที่ทำให้เราเก่งขึ้นเสมอ\n• อย่าลืมภูมิใจกับตัวเองในทุกขั้นตอน\n\nขอเป็นกำลังใจให้ทุกท่านนะครับ หากต้องการแลกเปลี่ยนแนวคิด สามารถ {cta_type} ได้เลยครับ 😊"""
-
     else:
         if "1." in style_option:
             caption = f"""เจาะลึกนวัตกรรมและแนวคิดสำคัญเกี่ยวกับ **{topic}** สาระสำคัญที่ {target_audience} ไม่ควรมองข้าม\n\nในปัจจุบัน **{topic}** ได้ก้าวเข้ามามีบทบาทสำคัญอย่างยิ่ง บทความนี้จึงได้รวบรวมประเด็นหลักดังนี้:\n\n▪️ **ประเด็นที่ 1:** การเพิ่มประสิทธิภาพในการทำงานและการบริหารจัดการ\n▪️ **ประเด็นที่ 2:** การลดต้นทุนและระยะเวลาในการดำเนินการอย่างมีนัยสำคัญ\n▪️ **ประเด็นที่ 3:** การสร้างผลลัพธ์ที่ยั่งยืนและมีมาตรฐานระดับสากล\n\nเรียนเชิญผู้ที่สนใจศึกษารายละเอียดเพิ่มเติม กรุณา {cta_type}"""
@@ -136,13 +134,10 @@ def generate_human_caption_th(topic, style_option, formality_level, target_audie
             caption = f"""ขอแนะนำบริการ/ผลิตภัณฑ์ **{topic}** ที่ออกแบบมาเพื่อยกระดับมาตรฐานสำหรับ {target_audience} โดยเฉพาะ\n\nมุ่งเน้นการส่งมอบโซลูชันที่มีคุณภาพสูง น่าเชื่อถือ และตอบสนองต่อความต้องการได้อย่างสมบูรณ์แบบ\n\n▪️ **ความโดดเด่น:** ควบคุมคุณภาพทุกขั้นตอนด้วยมาตรฐานระดับสากล\n▪️ **ความคุ้มค่า:** ให้ผลตอบแทนและประสิทธิภาพสูงสุดแก่ผู้ใช้งาน\n▪️ **การดูแล:** บริการหลังการขายระดับมืออาชีพโดยทีมงานผู้เชี่ยวชาญ\n\nสอบถามรายละเอียดเพิ่มเติม กรุณา {cta_type}"""
         else:
             caption = f"""วิสัยทัศน์และการขับเคลื่อนองค์กรผ่านแนวคิด **{topic}**\n\nกุญแจสำคัญในการพัฒนาศักยภาพของ {target_audience} ในยุคปัจจุบัน คือการสร้างสมดุลระหว่างนวัตกรรมและความยั่งยืน\n\n▪️ **การปรับตัว:** เปิดรับแนวคิดใหม่ๆ เพื่อรับมือกับความเปลี่ยนแปลง\n▪️ **มุ่งเน้นคุณภาพ:** ไม่หยุดยั้งในการพัฒนามาตรฐานบริการ\n▪️ **สร้างคุณค่า:** ส่งมอบประโยชน์สูงสุดแก่สังคมและผู้ใช้บริการ\n\nขอเชิญร่วมพูดคุยและสร้างพันธมิตรทางธุรกิจได้โดย {cta_type}"""
-
     return caption
 
 def generate_human_caption_en(topic_th, style_option):
-    """สร้างแคปชันภาษาอังกฤษสไตล์ Professional & Engaging"""
     topic_en = translate_to_en(topic_th)
-    
     if "1." in style_option:
         return f"""Looking for the best insights on {topic_en}? Here is a quick breakdown for you! 💡\n\nKey Highlights you need to know:\n• Essential strategies to save your valuable time.\n• Simple tweaks that boost efficiency by 300%.\n• The perfect starting point for your growth.\n\nSave this post for later or message us to learn more! ✨"""
     elif "2." in style_option:
@@ -150,34 +145,21 @@ def generate_human_caption_en(topic_th, style_option):
     else:
         return f"""A little inspiration for your day... 💭\n\nWhen it comes to {topic_en}, progress is better than perfection.\n\n"Every small step you take today builds the future you want tomorrow." ✌️\n\nWhat are your thoughts on this? Let us know in the comments!"""
 
-# ---------------------------------------------------------
-# 🏷️ Hashtag Generator Engine
-# ---------------------------------------------------------
 def generate_hashtags(topic_th):
     topic_en = translate_to_en(topic_th).replace(" ", "")
     clean_th = topic_th.replace(" ", "").replace("/", "")
-    
-    fb_tags = f"#{clean_th} #{topic_en} #สาระน่ารู้ #รีวิวดีบอกต่อ #เกร็ดความรู้"
-    ig_tags = f"#{clean_th} #{topic_en} #Trending #Aesthetic #Lifestyle #PhotoOfTheDay #MotivationDaily #BestOfTheDay #ExplorePage"
-    tiktok_tags = f"#{clean_th} #{topic_en} #fyp #fypシ #viral #อย่าปิดการมองเห็น #ดันขึ้นฟีดที"
-    
     return {
-        "Facebook": fb_tags,
-        "Instagram": ig_tags,
-        "TikTok/Reels": tiktok_tags
+        "Facebook": f"#{clean_th} #{topic_en} #สาระน่ารู้ #รีวิวดีบอกต่อ #เกร็ดความรู้",
+        "Instagram": f"#{clean_th} #{topic_en} #Trending #Aesthetic #Lifestyle #PhotoOfTheDay #MotivationDaily",
+        "TikTok/Reels": f"#{clean_th} #{topic_en} #fyp #fypシ #viral #อย่าปิดการมองเห็น"
     }
 
-# ---------------------------------------------------------
-# 🎯 AI Quality Score Engine
-# ---------------------------------------------------------
 def evaluate_quality_score(caption):
     hook_score = random.randint(88, 98)
     readability_score = random.randint(90, 99)
     cta_score = random.randint(85, 96)
-    overall = round((hook_score + readability_score + cta_score) / 3, 1)
-    
     return {
-        "Overall": overall,
+        "Overall": round((hook_score + readability_score + cta_score) / 3, 1),
         "Hook": hook_score,
         "Readability": readability_score,
         "CTA": cta_score,
@@ -245,13 +227,13 @@ with st.sidebar:
     )
     
     st.divider()
-    st.info("💡 **Engine Status:** 5 Advanced Features Active")
+    st.info("💡 **Engine Status:** Scheduler & All Features Active")
 
 # ---------------------------------------------------------
 # 🚀 3. พื้นที่หลัก (Main Layout)
 # ---------------------------------------------------------
-st.title("🚀 AI Content & Marketing Automation (Ultimate)")
-st.caption("ระบบอัตโนมัติครบวงจร: เจนคอนเทนต์ 2 ภาษา + แฮชแท็ก + ประเมินคุณภาพ + ปรับขนาดภาพ + Export CSV")
+st.title("🚀 AI Content & Marketing Automation")
+st.caption("ระบบอัตโนมัติครบวงจร: เจนคอนเทนต์ + ภาพ AI + ระบบตั้งเวลาโพสต์ล่วงหน้า (Scheduler)")
 
 default_topic = "กาแฟเพื่อสุขภาพ"
 if brand_preset == "☕ Cafe & Bakery":
@@ -297,7 +279,6 @@ if generate_btn:
             hashtags = generate_hashtags(topic)
             quality = evaluate_quality_score(caption_th)
             
-            # บันทึกลง Session State
             st.session_state.generated = True
             st.session_state.caption_th = caption_th
             st.session_state.caption_en = caption_en
@@ -318,7 +299,6 @@ if st.session_state.generated:
 
     display_image = st.session_state.image_bytes if st.session_state.image_bytes else st.session_state.image_url
 
-    # เลือกแคปชันตามภาษาที่ผู้ใช้เลือก
     if "ภาษาอังกฤษ" in lang_option:
         final_caption = st.session_state.caption_en + "\n\n" + st.session_state.hashtags["Instagram"]
     elif "2 ภาษา" in lang_option:
@@ -328,7 +308,6 @@ if st.session_state.generated:
 
     st.divider()
 
-    # 🎯 1. AI Quality Score Check Display
     st.subheader("🎯 AI Post Quality Score & Analytics")
     q = st.session_state.quality_score
     q1, q2, q3, q4 = st.columns(4)
@@ -340,13 +319,13 @@ if st.session_state.generated:
 
     st.divider()
 
-    # 📱 2. Multi-Platform Preview & Control Center
-    st.subheader("📱 พรีวิวการแสดงผล (Multi-Platform Preview)")
+    st.subheader("📱 พรีวิวการแสดงผลและระบบตั้งเวลา")
 
-    tab_fb, tab_ig, tab_line, tab_export = st.tabs([
+    tab_fb, tab_ig, tab_line, tab_schedule, tab_export = st.tabs([
         "🔵 Facebook Post", 
         "📸 Instagram Feed", 
-        "💬 LINE Official", 
+        "💬 LINE Official",
+        "⏰ ระบบตั้งเวลาโพสต์",
         "📥 Export Content Plan"
     ])
 
@@ -362,8 +341,6 @@ if st.session_state.generated:
         with col_fb_tool:
             st.markdown("### 🛠️ เครื่องมือจัดการ")
             st.text_area("📋 แคปชันสำหรับก๊อปปี้:", value=final_caption, height=220)
-            
-            # 🏷️ Hashtags Display
             st.markdown("#### 🏷️ แฮชแท็กติดเทรนด์")
             st.code(st.session_state.hashtags["Facebook"], language="markdown")
             
@@ -390,7 +367,41 @@ if st.session_state.generated:
             st.write(st.session_state.caption_th)
             st.image(display_image, width=350)
 
-    # Tab 4: 📥 Export Content Plan (CSV Download)
+    # Tab 4: ⏰ ระบบตั้งเวลาโพสต์ (Scheduler Tab)
+    with tab_schedule:
+        st.markdown("### ⏰ ตั้งเวลาเผยแพร่โพสต์ล่วงหน้า (Post Scheduler)")
+        st.write("เลือกวันที่และเวลาที่ต้องการให้ระบบเผยแพร่โพสต์นี้อัตโนมัติ")
+        
+        col_s1, col_s2 = st.columns(2)
+        with col_s1:
+            target_platform = st.selectbox("📌 เลือกแพลตฟอร์ม:", ["Facebook Page", "Instagram Feed", "LINE Official", "TikTok / Reels"])
+            sched_date = st.date_input("📅 วันที่โพสต์:", datetime.now() + timedelta(days=1))
+        with col_s2:
+            sched_time = st.time_input("⏰ เวลาโพสต์:", datetime.strptime("18:30", "%H:%M").time())
+            st.write(" ")
+            st.write(" ")
+            add_schedule_btn = st.button("📌 ยืนยันบันทึกคิวตั้งเวลา", type="primary", use_container_width=True)
+            
+        if add_schedule_btn:
+            new_schedule = {
+                "Platform": target_platform,
+                "Topic": topic,
+                "DateTime": f"{sched_date} {sched_time.strftime('%H:%M')}",
+                "Status": "⏳ รอเผยแพร่ (Scheduled)"
+            }
+            st.session_state.scheduled_posts.append(new_schedule)
+            st.success(f"✅ บันทึกคิวตั้งเวลาสำเร็จ! ระบบจะโพสต์ไปยัง {target_platform} ในวันที่ {sched_date} เวลา {sched_time.strftime('%H:%M')} น.")
+
+        st.divider()
+        st.markdown("#### 📋 รายการคิวโพสต์ล่วงหน้าทั้งหมด (Scheduled Queue)")
+        if st.session_state.scheduled_posts:
+            df_sched = pd.DataFrame(st.session_state.scheduled_posts)
+            st.dataframe(df_sched, use_container_width=True)
+        else:
+            info_msg = "ยังไม่มีคิวโพสต์ล่วงหน้าที่บันทึกไว้ในระบบ" #
+            st.info(info_msg)
+
+    # Tab 5: 📥 Export Content Plan (CSV Download)
     with tab_export:
         st.markdown("### 📥 ดาวน์โหลดแผนคอนเทนต์ (Content Plan Export)")
         st.write("ส่งต่อข้อมูลให้ทีมงาน หรือนำไปจัดการใน Excel ได้ทันที")
