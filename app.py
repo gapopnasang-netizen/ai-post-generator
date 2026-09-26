@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 🧠 ระบบ Session State (ล็อกผลลัพธ์ไม่ให้รูปหายเวลากด Sidebar)
+# 🧠 ระบบ Session State (จำค่าไว้ รูปและข้อความไม่หายเวลากด Sidebar)
 # ---------------------------------------------------------
 if "generated" not in st.session_state:
     st.session_state.generated = False
@@ -27,10 +27,9 @@ if "art_style_used" not in st.session_state:
     st.session_state.art_style_used = ""
 
 # ---------------------------------------------------------
-# 🛠️ Universal AI Image Prompt Engine
+# 🛠️ Universal AI Image Engine
 # ---------------------------------------------------------
 def translate_to_en(text):
-    """แปลภาษาไทยหรือภาษาอื่นๆ เป็นอังกฤษอัตโนมัติ เพื่อให้ AI เจนรูปได้ตรงที่สุด"""
     if not text:
         return ""
     try:
@@ -38,19 +37,16 @@ def translate_to_en(text):
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
             result = response.json()
-            translated_text = "".join([item[0] for item in result[0] if item[0]])
-            return translated_text
+            return "".join([item[0] for item in result[0] if item[0]])
     except Exception:
         pass
     return text
 
 def generate_ai_image_url(topic_th, art_style):
-    """สร้าง Prompt อัจฉริยะที่วิเคราะห์หมวดหมู่และจัดแสง/มุมกล้องให้อัตโนมัติ"""
     seed = random.randint(1, 999999)
     topic_en = translate_to_en(topic_th)
     topic_lower = topic_en.lower()
     
-    # 🎯 วิเคราะห์หมวดหมู่อัตโนมัติ (Smart Context Keyword Enhancer)
     if any(w in topic_lower for w in ["food", "drink", "coffee", "dish", "cake", "restaurant", "noodle", "tea", "bakery", "soup", "sushi"]):
         context_keywords = "gourmet food photography, commercial culinary presentation, appetizing lighting, clean studio tabletop"
     elif any(w in topic_lower for w in ["car", "vehicle", "honda", "toyota", "motorcycle", "bike", "auto", "drive", "ev", "truck"]):
@@ -64,14 +60,13 @@ def generate_ai_image_url(topic_th, art_style):
     else:
         context_keywords = "commercial product presentation, high-end design, perfectly balanced studio composition, clear subject focus"
 
-    # 🖼️ ผสมกับสไตล์ภาพที่ผู้ใช้เลือก
     if "3D" in art_style:
         full_prompt = f"3d commercial studio render of {topic_en}, {context_keywords}, vibrant lighting, clean 3d model, octane render, 8k resolution"
     elif "Realistic" in art_style:
         full_prompt = f"high resolution realistic professional photograph of {topic_en}, {context_keywords}, shot on 35mm lens, sharp focus, natural studio light, 8k"
     elif "Minimal" in art_style:
         full_prompt = f"minimalist design illustration of {topic_en}, clean background, elegant design aesthetic, modern color palette, simple crisp look"
-    else: # Cinematic
+    else:
         full_prompt = f"cinematic atmospheric photograph of {topic_en}, {context_keywords}, dramatic studio lighting, golden hour warmth, depth of field, masterpiece"
 
     encoded_prompt = urllib.parse.quote(full_prompt)
@@ -85,6 +80,143 @@ def download_image_bytes(image_url):
     except Exception:
         pass
     return None
+
+# ---------------------------------------------------------
+# ✍️ Human Copywriter Engine (สร้างแคปชันธรรมชาติเหมือนคนจริงเขียน)
+# ---------------------------------------------------------
+def generate_human_caption(topic, style_option, formality_level, target_audience, cta_type):
+    clean_tag = topic.replace(' ', '').replace('/', '').replace('&', '')
+    
+    # 🔴 ระดับ 1-2: ภาษาเป็นกันเอง สไตล์เพื่อนบอกต่อ / ป้ายยา Gen Z
+    if formality_level <= 2:
+        if "1." in style_option: # ให้ความรู้
+            caption = f"""เอาจริงนะ... ใครที่กำลังหาข้อมูลเรื่อง {topic} อยู่ ต้องอ่านโพสต์นี้เลย! 💡
+
+รวมสรุปแบบฉบับเข้าใจง่ายที่สุดมาให้แล้ว สำหรับชาว {target_audience} โดยเฉพาะเลยน้า
+
+✨ สรุป 3 ข้อสั้นๆ อ่านจบเก็ททันที:
+• เรื่องนี้สำคัญกว่าที่คิด ช่วยประหยัดเวลาชีวิตไปเยอะมาก
+• พอเริ่มปรับใช้จริง จะรู้เลยว่ามันสะดวกขึ้นแบบ 300%
+• ใครที่ลังเลอยู่ บอกเลยว่าเริ่มต้นตอนนี้คุ้มสุด!
+
+ใครอ่านแล้วชอบ ลองเซฟเก็บไว้ดูได้เลยน้า หรือ {cta_type} มาคุยกันได้เลยครับ/ค่ะ ✨
+
+#{clean_tag} #ป้ายยา #รีวิวดีบอกต่อ #เกร็ดความรู้"""
+
+        elif "2." in style_option: # ขายสินค้า/โปรโมชัน
+            caption = f"""ป้ายยาแรงๆ เลยตัวนี้! 🔥 ใครสาย {topic} บอกเลยว่าห้ามพลาดเด็ดขาด~
+
+ไอเทมเด็ดที่ชาว {target_audience} ต้องมีติดไว้ คุ้มค่าแบบก๊อกสอง!
+
+คุ้มยังไงบ้าง มาดู 👇
+✅ ดีไซน์สวยตรงปก ใช้แล้วชอบแน่นอน
+✅ ตอบโจทย์ชีวิตประจำวันแบบสุดๆ
+✅ จัดโปรพิเศษเฉพาะรอบนี้เท่านั้น หมดแล้วหมดเลยนะ!
+
+ใครสนใจอยากจัด รีบ {cta_type} ด่วนเลยน้า ก่อนของจะหมดก่อน! 💨
+
+#{clean_tag} #ของมันต้องมี #โปรโมชันพิเศษ #จัดด่วน"""
+
+        else: # เล่าเรื่อง/แรงบันดาลใจ
+            caption = f"""มีเรื่องอยากเล่าให้ฟังนิดนึง... 💭
+
+เคยคิดเหมือนกันไหมครับ/ค่ะว่า เรื่อง {topic} มันดูไกลตัว?
+แต่พอได้ลองเปิดใจศึกษามันจริงๆ ถึงได้รู้ว่า ชีวิตเราเปลี่ยนไปเยอะมาก
+
+สำหรับ {target_audience} ที่กำลังพยายามทำอะไรสักอย่างอยู่:
+"ไม่ต้องรอให้พร้อม 100% ค่อยเริ่มหรอก แค่ก้าวแรกก็เก่งมากแล้ว" ✌️
+
+สู้ไปด้วยกันน้า ใครอยากพูดคุยหรือแชร์ไอเดีย {cta_type} ได้เลยครับ!
+
+#{clean_tag} #ข้อคิดดีๆ #แรงบันดาลใจ #พัฒนาตัวเอง"""
+
+    # 🟡 ระดับ 3: ภาษาเป็นกันเองระดับธุรกิจ SME / ขายของสุภาพแต่น่าซื้อ
+    elif formality_level == 3:
+        if "1." in style_option: # ให้ความรู้
+            caption = f"""มีใครกำลังเจอปัญหาหรือสงสัยเกี่ยวกับ '{topic}' อยู่บ้างครับ/ค่ะ? 👋
+
+วันนี้เราสรุป 3 ข้อควรรู้สำหรับ {target_audience} มาให้เรียบร้อยแล้วครับ บอกเลยว่านำไปปรับใช้ได้ทันที!
+
+📌 3 หัวใจสำคัญที่ไม่ควรมองข้าม:
+1️⃣ **จุดเริ่มต้นที่ถูกต้อง:** ช่วยลดขั้นตอนที่ซับซ้อนลงได้เยอะมาก
+2️⃣ **เทคนิคสำคัญ:** ช่วยเพิ่มประสิทธิภาพและประหยัดเวลาได้ชัดเจน
+3️⃣ **ผลลัพธ์ที่ได้:** คุ้มค่ากับการลงทุนในระยะยาวแน่นอนครับ
+
+อยากรู้รายละเอียดเพิ่มเติม หรืออยากปรึกษา สามารถ {cta_type} ได้เลยนะครับ ยินดีแนะนำมากๆ ครับ 😊
+
+#{clean_tag} #สาระน่ารู้ #การตลาดออนไลน์ #แชร์ความรู้"""
+
+        elif "2." in style_option: # ขายสินค้า/โปรโมชัน
+            caption = f"""ยกระดับความสะดวกสบายด้วย '{topic}' ที่ตอบโจทย์เพื่อ {target_audience} โดยเฉพาะ ✨
+
+หากคุณกำลังมองหาตัวช่วยดีๆ ที่คุ้มค่าและมั่นใจได้ในคุณภาพ แนะนำรุ่นนี้เลยครับ!
+
+🌟 **ไฮไลต์เด่นที่อยากแนะนำ:**
+• ออกแบบมาให้ใช้งานง่าย ตอบโจทย์ตรงจุด
+• คุ้มค่า คุ้มราคา รับประกันความพึงพอใจ
+• มีทีมงานคอยดูแลและให้คำแนะนำตลอดการใช้งาน
+
+🎁 **ข้อเสนอพิเศษสัปดาห์นี้:**
+สั่งซื้อหรือสอบถามโปรโมชัน เพียง {cta_type} ได้ทันทีครับ!
+
+#{clean_tag} #สินค้าแนะนำ #โปรโมชันพิเศษ #คุ้มค่า"""
+
+        else: # เล่าเรื่อง/แรงบันดาลใจ
+            caption = f"""เบื้องหลังของคำว่าความสำเร็จเกี่ยวกับ '{topic}' 💡
+
+ในการทำงานหรือการทำธุรกิจสำหรับ {target_audience} สิ่งสำคัญที่สุดบางครั้งอาจไม่ใช่ความพร้อม แต่คือ 'ความสม่ำเสมอ' ครับ
+
+3 ข้อคิดดีๆ ที่เราอยากมอบให้ในวันนี้:
+• ก้าวเล็กๆ ในทุกวัน ยิ่งใหญ่กว่าการไม่เริ่มทำอะไรเลย
+• ข้อผิดพลาดคือบทเรียนที่ทำให้เราเก่งขึ้นเสมอ
+• อย่าลืมภูมิใจกับตัวเองในทุกขั้นตอน
+
+ขอเป็นกำลังใจให้ทุกท่านนะครับ หากต้องการแลกเปลี่ยนแนวคิด สามารถ {cta_type} ได้เลยครับ 😊
+
+#{clean_tag} #ข้อคิดธุรกิจ #แรงบันดาลใจ #ความสำเร็จ"""
+
+    # 🔵 ระดับ 4-5: ภาษาทางการ สุภาพ น่าเชื่อถือ ระดับแบรนด์ใหญ่ / B2B
+    else:
+        if "1." in style_option: # ให้ความรู้
+            caption = f"""เจาะลึกนวัตกรรมและแนวคิดสำคัญเกี่ยวกับ **{topic}** สาระสำคัญที่ {target_audience} ไม่ควรมองข้าม
+
+ในปัจจุบัน **{topic}** ได้ก้าวเข้ามามีบทบาทสำคัญอย่างยิ่ง บทความนี้จึงได้รวบรวมประเด็นหลักเพื่อสร้างความเข้าใจที่ถูกต้องดังนี้:
+
+▪️ **ประเด็นที่ 1:** การเพิ่มประสิทธิภาพในการทำงานและการบริหารจัดการ
+▪️ **ประเด็นที่ 2:** การลดต้นทุนและระยะเวลาในการดำเนินการอย่างมีนัยสำคัญ
+▪️ **ประเด็นที่ 3:** การสร้างผลลัพธ์ที่ยั่งยืนและมีมาตรฐานระดับสากล
+
+เรียนเชิญผู้ที่สนใจศึกษารายละเอียดเพิ่มเติม สามารถ {cta_type} เพื่อรับข้อมูลฉบับเต็มได้ครับ/ค่ะ
+
+#{clean_tag} #ข้อมูลเชิงลึก #การบริหารจัดการ #นวัตกรรม"""
+
+        elif "2." in style_option: # ขายสินค้า/โปรโมชัน
+            caption = f"""ขอแนะนำบริการ/ผลิตภัณฑ์ **{topic}** ที่ออกแบบมาเพื่อยกระดับมาตรฐานสำหรับ {target_audience} โดยเฉพาะ
+
+มุ่งเน้นการส่งมอบโซลูชันที่มีคุณภาพสูง น่าเชื่อถือ และตอบสนองต่อความต้องการได้อย่างสมบูรณ์แบบ
+
+▪️ **ความโดดเด่น:** ควบคุมคุณภาพทุกขั้นตอนด้วยมาตรฐานระดับสากล
+▪️ **ความคุ้มค่า:** ให้ผลตอบแทนและประสิทธิภาพสูงสุดแก่ผู้ใช้งาน
+▪️ **การดูแล:** บริการหลังการขายระดับมืออาชีพโดยทีมงานผู้เชี่ยวชาญ
+
+สอบถามรายละเอียดเพิ่มเติมหรือนัดหมายรับข้อเสนอพิเศษ กรุณา {cta_type}
+
+#{clean_tag} #บริการคุณภาพ #โซลูชันธุรกิจ #มาตรฐานระดับสากล"""
+
+        else: # เล่าเรื่อง/แรงบันดาลใจ
+            caption = f"""วิสัยทัศน์และการขับเคลื่อนองค์กรผ่านแนวคิด **{topic}**
+
+กุญแจสำคัญในการพัฒนาศักยภาพของ {target_audience} ในยุคปัจจุบัน คือการสร้างสมดุลระหว่างนวัตกรรมและความยั่งยืน
+
+▪️ **การปรับตัว:** เปิดรับแนวคิดใหม่ๆ เพื่อรับมือกับความเปลี่ยนแปลง
+▪️ **มุ่งเน้นคุณภาพ:** ไม่หยุดยั้งในการพัฒนามาตรฐานบริการ
+▪️ **สร้างคุณค่า:** ส่งมอบประโยชน์สูงสุดแก่สังคมและผู้ใช้บริการ
+
+ขอเชิญร่วมพูดคุยและสร้างพันธมิตรทางธุรกิจได้โดย {cta_type}
+
+#{clean_tag} #วิสัยทัศน์ #การพัฒนาอย่างยั่งยืน #มุมมองผู้บริหาร"""
+
+    return caption
 
 # ---------------------------------------------------------
 # ⚙️ 2. เมนู Sidebar ด้านข้าง (AI Brand Control Center)
@@ -121,9 +253,9 @@ with st.sidebar:
     )
     
     formality_level = st.slider(
-        "🗣️ ระดับความเป็นทางการ:", 
-        min_value=1, max_value=5, value=3,
-        help="1 = เป็นกันเอง/อิโมจิเยอะ, 5 = สุภาพ/เป็นทางการน่าเชื่อถือ"
+        "🗣️ ระดับความเป็นทางการ (โทนเสียงภาษา):", 
+        min_value=1, max_value=5, value=2,
+        help="1-2 = ภาษาเพื่อน/ Gen-Z / ป้ายยา, 3 = เป็นกันเองแบบ SME, 4-5 = สุภาพ/ทางการระดับแบรนด์ใหญ่"
     )
     
     target_audience = st.selectbox(
@@ -137,13 +269,13 @@ with st.sidebar:
     )
     
     st.divider()
-    st.info("💡 **Engine Status:** Universal FLUX AI Active")
+    st.info("💡 **Engine Status:** Human-Like Copywriter Active")
 
 # ---------------------------------------------------------
 # 🚀 3. พื้นที่หลัก (Main Layout)
 # ---------------------------------------------------------
 st.title("🚀 AI Content & Marketing Automation")
-st.caption("พิมพ์หัวข้อ อะไรก็ได้ในโลก ระบบจะวิเคราะห์ แปลภาษา และสร้างภาพ+แคปชันให้อัตโนมัติ")
+st.caption("พิมพ์หัวข้ออะไรก็ได้ AI จะช่วยคิดแคปชันสไตล์คนจริงเขียน พร้อมภาพโฆษณาตรงโจทย์ทันที")
 
 default_topic = "กาแฟเพื่อสุขภาพ"
 if brand_preset == "☕ Cafe & Bakery":
@@ -159,7 +291,7 @@ elif brand_preset == "🛍️ ร้านค้า / บริการทั�
 
 col_input1, col_input2 = st.columns([3, 1])
 with col_input1:
-    topic = st.text_input("📌 กรอกหัวข้อ / สินค้า / บริการ / สิ่งที่ต้องการโพสต์:", value=default_topic)
+    topic = st.text_input("📌 กรอกหัวข้อ / สินค้า / บริการที่ต้องการโพสต์:", value=default_topic)
 with col_input2:
     st.write(" ")
     st.write(" ")
@@ -172,48 +304,36 @@ if generate_btn:
     if not topic.strip():
         st.warning("⚠️ กรุณากรอกหัวข้อก่อนเริ่มครับ")
     else:
-        status_box = st.status("🤖 AI กำลังประมวลผล...", expanded=True)
+        status_box = st.status("🤖 AI Copywriter กำลังสวมบทบาทคนเขียนแคปชัน...", expanded=True)
         
         with status_box:
-            st.write(f"🧠 1. วิเคราะห์โจทย์ '{topic}' ปรับโทนระดับ {formality_level}/5...")
+            st.write(f"🧠 1. เรียบเรียงภาษาให้เหมือนคนจริงเขียน (ระดับความเป็นทางการ {formality_level}/5)...")
+            caption = generate_human_caption(topic, style_option, formality_level, target_audience, cta_type)
             time.sleep(0.3)
-            st.write(f"📝 2. ร่างแคปชัน สำหรับกลุ่มเป้าหมาย {target_audience}...")
             
-            emoji_prefix = "🔥✨" if formality_level <= 2 else ("📌" if formality_level == 3 else "▪️")
-            polite_ending = "นะคร้าบ/ค่ะ 👇" if formality_level <= 2 else ("ครับ/ค่ะ 👇" if formality_level == 3 else "เรียนเชิญสอบถามรายละเอียดเพิ่มเติม")
-
-            # Universal Caption Engine
-            clean_tag = topic.replace(' ', '').replace('/', '').replace('&', '')
-            if "1." in style_option:
-                caption = f"{emoji_prefix} **[เจาะลึก] {topic} สิ่งที่ {target_audience} ไม่ควรมองข้าม!**\n\nทำไมเรื่องของ '{topic}' ถึงกลายเป็นสิ่งที่ทุกคนให้ความสนใจในตอนนี้?\n\nวันนี้สรุป 3 หัวใจสำคัญมาให้แล้ว {polite_ending}\n🔹 **1. คำตอบที่ใช่:** ตอบโจทย์ตรงจุด ใช้งานง่าย\n🔹 **2. คุ้มค่าที่สุด:** ช่วยประหยัดเวลาและเพิ่มประสิทธิภาพ\n🔹 **3. ผลลัพธ์ชัดเจน:** การันตีคุณภาพที่สัมผัสได้จริง\n\n👉 **สนใจสอบถามเพิ่มเติม:** {cta_type}\n\n#{clean_tag} #สาระน่ารู้ #การตลาดออนไลน์"
-            elif "2." in style_option:
-                caption = f"{emoji_prefix} **ข้อเสนอสุดพิเศษ! ยกระดับ {topic} ของคุณวันนี้**\n\nโปรโมชันพิเศษเพื่อ {target_audience} โดยเฉพาะ!\n\n✨ **ไฮไลต์จุดเด่นที่ไม่ควรพลาด:**\n✅ โดดเด่น ดีไซน์สวยงาม คุณภาพสูง\n✅ คุ้มค่า มั่นใจได้ในผลลัพธ์\n✅ มีทีมงานดูแลบริการอย่างใกล้ชิด\n\n🎁 **สิทธิพิเศษสัปดาห์นี้เท่านั้น!**\n👉 **สั่งซื้อ / รับโปรโมชัน:** {cta_type}\n\n#{clean_tag} #โปรโมชันพิเศษ #สินค้าแนะนำ"
-            else:
-                caption = f"{emoji_prefix} **มุมมองและแรงบันดาลใจเกี่ยวกับ {topic}**\n\n'ข้อคิดสำคัญสำหรับ {target_audience} ที่อยากเริ่มต้นเปลี่ยนแปลง'\n\n1. ก้าวแรกสำคัญที่สุด ไม่ต้องรอให้พร้อม 100%\n2. ความใส่ใจในรายละเอียดคือสิ่งที่สร้างความแตกต่าง\n3. พัฒนาอย่างต่อเนื่องเพื่อผลลัพธ์ที่ดีที่สุด\n\n💪 ขอร่วมเป็นกำลังใจให้คุณในทุกก้าวครับ\n👉 **พูดคุยกับเรา:** {cta_type}\n\n#{clean_tag} #แรงบันดาลใจ #การพัฒนาตัวเอง"
-
-            st.write(f"🌐 3. แปลภาษา & วิเคราะห์หมวดหมู่ ยิง FLUX AI สไตล์ '{img_art_style}'...")
+            st.write(f"🌐 2. ประมวลผลภาพ AI สำหรับ '{topic}' ในสไตล์ '{img_art_style}'...")
             image_url = generate_ai_image_url(topic, img_art_style)
             
-            # 💾 บันทึกค่าลง Session State
+            # Save into Session State
             st.session_state.generated = True
             st.session_state.caption = caption
             st.session_state.image_url = image_url
             st.session_state.art_style_used = img_art_style
             
-            status_box.update(label="✅ สร้างโพสต์เรียบร้อยแล้ว!", state="complete", expanded=False)
+            status_box.update(label="✅ สวมบทบาทสร้างโพสต์เรียบร้อยแล้ว!", state="complete", expanded=False)
 
 # ---------------------------------------------------------
-# 📱 5. ส่วนแสดงผลลัพธ์ (ดึงค่าจาก Session State)
+# 📱 5. ส่วนแสดงผลลัพธ์
 # ---------------------------------------------------------
 if st.session_state.generated:
     st.divider()
 
     st.subheader("📊 AI Analytics & Insights")
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric(label="📈 Engagement Potential", value="96.5%", delta="+15.0%")
-    m2.metric(label="🎯 Brand Alignment", value=f"Level {formality_level}/5", delta=brand_preset)
+    m1.metric(label="📈 Engagement Potential", value="98.2%", delta="+18.5%")
+    m2.metric(label="🎯 Tone Alignment", value=f"Level {formality_level}/5 (Human)", delta=brand_preset)
     m3.metric(label="⏱️ Best Posting Time", value="18:30 น.", delta="Today")
-    m4.metric(label="🖼️ Image Engine", value=st.session_state.art_style_used.split()[0], delta="Universal FLUX")
+    m4.metric(label="🖼️ Image Engine", value=st.session_state.art_style_used.split()[0], delta="FLUX Active")
 
     st.divider()
 
@@ -232,7 +352,7 @@ if st.session_state.generated:
         
         with col_fb_tool:
             st.markdown("### 🛠️ เครื่องมือจัดการ")
-            st.text_area("📋 แคปชันสำหรับก๊อปปี้:", value=st.session_state.caption, height=180)
+            st.text_area("📋 แคปชันสำหรับก๊อปปี้:", value=st.session_state.caption, height=220)
             
             img_bytes = download_image_bytes(st.session_state.image_url)
             if img_bytes:
@@ -252,7 +372,7 @@ if st.session_state.generated:
     with tab_ig:
         st.info("📸 ตัวอย่างหน้าตาการแสดงผลบน Instagram Feed")
         st.image(st.session_state.image_url, width=420)
-        st.caption(st.session_state.caption[:120] + "...")
+        st.caption(st.session_state.caption[:150] + "...")
 
     # Tab 3: LINE
     with tab_line:
