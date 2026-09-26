@@ -13,35 +13,36 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 🛠️ ฟังก์ชันการทำงานของ AI Image Engine
+# 🛠️ ฟังก์ชันการทำงานของ AI Image Engine (แปลภาษา + เจนภาพ)
 # ---------------------------------------------------------
-def generate_ai_image_url(topic_th, art_style):
-    seed = random.randint(1, 999999)
-    topic_lower = topic_th.lower()
-    
-    # 🎯 จับคู่หัวข้อภาษาไทยเป็นคำสร้างภาพภาษาอังกฤษ (Topic Mapping)
-    if "honda" in topic_lower or "civic" in topic_lower or "รถ" in topic_lower or "car" in topic_lower:
-        subject = "sleek modern Honda Civic car, luxury automotive photography, glossy finish, studio showroom"
-    elif "กาแฟ" in topic_lower or "cafe" in topic_lower or "coffee" in topic_lower:
-        subject = "a cup of premium healthy espresso coffee drink, fresh coffee beans background"
-    elif "สกินแคร์" in topic_lower or "เซรั่ม" in topic_lower or "ผิว" in topic_lower or "ครีม" in topic_lower:
-        subject = "luxury skincare serum cosmetic bottle with natural ingredients, aesthetic studio lighting"
-    elif "คอนโด" in topic_lower or "บ้าน" in topic_lower or "อสังหา" in topic_lower:
-        subject = "modern luxury interior condominium living room with city view"
-    elif "อาหาร" in topic_lower or "ขนม" in topic_lower or "เบเกอรี่" in topic_lower:
-        subject = "delicious gourmet food bakery presentation, appetizing aesthetic"
-    else:
-        subject = f"professional product presentation, modern aesthetic background"
+def translate_th_to_en(text_th):
+    """แปลคำค้นหาภาษาไทยเป็นภาษาอังกฤษเพื่อส่งให้ FLUX AI (รองรับทุกคำค้นหาฟรี 100%)"""
+    try:
+        url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=th&tl=en&dt=t&q={urllib.parse.quote(text_th)}"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            result = response.json()
+            return result[0][0][0]
+    except Exception:
+        pass
+    return text_th
 
-    # 🖼️ รวมคำสร้างภาพเข้ากับสไตล์ภาพที่ผู้ใช้เลือก
+def generate_ai_image_url(topic_th, art_style):
+    """แปลหัวข้อและรวมเข้ากับ Prompt สไตล์ภาพเพื่อส่งยิงไปที่ FLUX AI"""
+    seed = random.randint(1, 999999)
+    
+    # 🌐 1. แปลภาษาไทยเป็นอังกฤษอัตโนมัติ (เช่น "รองเท้าวิ่ง" -> "Running shoes")
+    topic_en = translate_th_to_en(topic_th)
+    
+    # 🖼️ 2. ประกอบ Prompt ภาษาอังกฤษตามสไตล์ภาพที่เลือก
     if "3D" in art_style:
-        full_prompt = f"3d commercial studio render of {subject}, vibrant lighting, clean 3d model, 8k resolution"
+        full_prompt = f"3d commercial studio render of {topic_en}, professional product presentation, vibrant studio lighting, clean render, 8k resolution"
     elif "Realistic" in art_style:
-        full_prompt = f"high resolution realistic photograph of {subject}, professional commercial photography, natural studio light"
+        full_prompt = f"high resolution realistic commercial photograph of {topic_en}, studio lighting, sharp focus, professional product shot, 8k"
     elif "Minimal" in art_style:
-        full_prompt = f"minimalist vector illustration of {subject}, clean design aesthetic, elegant color palette"
+        full_prompt = f"minimalist vector illustration of {topic_en}, clean design aesthetic, elegant color palette, high quality"
     else:
-        full_prompt = f"cinematic atmospheric photography of {subject}, warm lighting, golden hour atmosphere, masterpiece"
+        full_prompt = f"cinematic atmospheric photography of {topic_en}, warm studio lighting, golden hour, masterpiece, detailed background"
 
     encoded_prompt = urllib.parse.quote(full_prompt)
     return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1080&model=flux&seed={seed}&nologo=true"
@@ -106,7 +107,7 @@ with st.sidebar:
     )
     
     st.divider()
-    st.info("💡 **Engine Status:** FLUX AI & Prompt Mapping Active")
+    st.info("💡 **Engine Status:** Auto-Translate & FLUX AI Active")
 
 # ---------------------------------------------------------
 # 🚀 3. พื้นที่หลัก (Main Layout)
@@ -144,7 +145,7 @@ if generate_btn:
         
         with status_box:
             st.write(f"🧠 1. วิเคราะห์โจทย์ '{topic}' ปรับโทนระดับ {formality_level}/5...")
-            time.sleep(0.4)
+            time.sleep(0.3)
             st.write(f"📝 2. ร่างแคปชัน และประมวลผล Hashtag สำหรับ {target_audience}...")
             
             # ปรับแต่งคำตามระดับความทางการ
@@ -159,7 +160,7 @@ if generate_btn:
             else:
                 caption = f"{emoji_prefix} **เรื่องราวและแนวคิดเกี่ยวกับ {topic}**\n\n'ข้อคิดสำคัญสำหรับ {target_audience} ที่กำลังพัฒนาตัวเอง'\n\n1. ไม่ต้องรอให้พร้อม 100% ค่อยเริ่ม\n2. ความสม่ำเสมอคือหัวใจของความสำเร็จ\n3. เรียนรู้จากข้อผิดพลาด แล้วปรับปรุงให้ไวขึ้น\n\n💪 ขอเป็นกำลังใจให้ทุกคนครับ\n👉 **ติดต่อแบรนด์:** {cta_type}\n\n#แรงบันดาลใจ #{topic.replace(' ', '')}"
 
-            st.write(f"🎨 3. ยิง FLUX AI เจนภาพสไตล์ '{img_art_style}' แบบเรียลไทม์...")
+            st.write(f"🌐 3. แปลคำค้นหา และยิง FLUX AI เจนภาพสไตล์ '{img_art_style}'...")
             image_url = generate_ai_image_url(topic, img_art_style)
             
             status_box.update(label="✅ สร้างโพสต์เรียบร้อยแล้ว!", state="complete", expanded=False)
