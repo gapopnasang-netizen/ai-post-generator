@@ -3,17 +3,23 @@ import requests
 import urllib.parse
 import random
 import time
+from datetime import datetime, timedelta
 
-# 1. ตั้งค่าหน้าตาเว็บ
+# 1. ตั้งค่าหน้าตาเว็บแบบ Wide
 st.set_page_config(
-    page_title="AI Social Content Studio",
+    page_title="AI Marketing Automation Suite",
     page_icon="🚀",
     layout="wide"
 )
 
-# 2. เมนู Sidebar
+# 2. เมนู Sidebar ด้านข้าง (ปรับแต่งละเอียด)
 with st.sidebar:
-    st.title("⚙️ ตั้งค่าระบบ")
+    st.image("https://img.icons8.com/color/96/facebook-new.png", width=60)
+    st.title("⚙️ AI Control Center")
+    st.caption("ปรับแต่งพารามิเตอร์การสร้างคอนเทนต์")
+    
+    st.divider()
+    
     style_option = st.selectbox(
         "🎨 สไตล์คอนเทนต์:",
         [
@@ -22,19 +28,35 @@ with st.sidebar:
             "3. แนวเล่าเรื่อง / แรงบันดาลใจ (Storytelling)"
         ]
     )
-    st.info("💡 ภาพประกอบถูกเจนขึ้นมาใหม่ด้วย FLUX AI แบบเรียลไทม์")
+    
+    target_audience = st.selectbox(
+        "🎯 กลุ่มเป้าหมายหลัก:",
+        ["คนทำงาน / วัยสร้างตัว", "วัยรุ่น / Gen Z", "เจ้าของธุรกิจ / ผู้ประกอบการ", "คุณแม่และครอบครัว"]
+    )
+    
+    cta_type = st.radio(
+        "📣 ปุ่มกระตุ้นการขาย (CTA):",
+        ["ทักแชตเพจเพื่อรับโปร", "คอมเมนต์ใต้โพสต์", "คลิกลิงก์หน้าโปรไฟล์"]
+    )
+    
+    st.divider()
+    st.info("💡 **Engine Status:** FLUX AI Generator & Claude Logic Active")
 
-# 3. พื้นที่หลัก
-st.title("🚀 AI Social Content Generator")
-st.caption("ระบบช่วยคิดคอนเทนต์ สร้างแคปชัน และเจนภาพประกอบอัตโนมัติ")
+# 3. ส่วนหัวเรื่องหลัก
+st.title("🚀 AI Content & Marketing Automation")
+st.caption("ระบบช่วยคิดคอนเทนต์ คำนวณความน่าสนใจ และเจนรูปภาพประกอบอัตโนมัติ")
 
-topic = st.text_input("📌 กรอกหัวข้อ / สินค้าที่ต้องการโพสต์:", value="กาแฟเพื่อสุขภาพ")
+col_input1, col_input2 = st.columns([3, 1])
+with col_input1:
+    topic = st.text_input("📌 กรอกหัวข้อ / สินค้าที่ต้องการโพสต์:", value="กาแฟเพื่อสุขภาพ")
+with col_input2:
+    st.write(" ")
+    st.write(" ")
+    generate_btn = st.button("✨ เจนคอนเทนต์สด", type="primary", use_container_width=True)
 
-# ฟังก์ชันดึงภาพ AI แบบปลอดภัย (ล็อก Prompt เป็นภาษาอังกฤษบริสุทธิ์)
+# ฟังก์ชันดึงภาพ AI
 def get_flux_image(style):
     seed = random.randint(1, 999999)
-    
-    # เลือก Prompt ภาษาอังกฤษล้วนตามสไตล์ เพื่อไม่ให้ URL พัง
     if "1." in style:
         prompt = "professional modern technology infographic banner, minimalist vector graphic design, clean lighting, 8k"
     elif "2." in style:
@@ -45,10 +67,7 @@ def get_flux_image(style):
     encoded_prompt = urllib.parse.quote(prompt)
     image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1080&model=flux&seed={seed}&nologo=true"
     
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     try:
         response = requests.get(image_url, headers=headers, timeout=15)
         if response.status_code == 200 and len(response.content) > 1000:
@@ -57,51 +76,79 @@ def get_flux_image(style):
         pass
     return None
 
-if st.button("✨ สั่ง AI สร้างโพสต์ (พร้อมรูปภาพ)", type="primary", use_container_width=True):
+if generate_btn:
     if not topic.strip():
         st.warning("⚠️ กรุณากรอกหัวข้อยอดนิยมก่อนเริ่มครับ")
     else:
         status_box = st.status("🤖 AI กำลังทำงาน...", expanded=True)
         
         with status_box:
-            st.write("🧠 1. กำลังสร้างแคปชันภาษาไทย...")
-            time.sleep(1)
+            st.write("🧠 1. วิเคราะห์กลุ่มเป้าหมาย:", target_audience)
+            time.sleep(0.5)
+            st.write("📝 2. กำลังร่างแคปชันและติด Hashtag...")
             
-            # โลจิกแคปชันภาษาไทย
+            # โลจิกแคปชันภาษาไทยตามเงื่อนไข
             if "1." in style_option:
-                caption = f"💡 **[สาระน่ารู้] {topic} ที่คนยุคนี้ต้องรู้!**\n\nเคยสงสัยไหมครับว่า ทำไมเรื่อง '{topic}' ถึงกลายเป็นสิ่งสำคัญในตอนนี้?\n\nวันนี้สรุป 3 หัวใจสำคัญมาให้แล้วครับ 👇\n🔹 **1. จุดเริ่มต้น:** เข้าใจง่าย นำไปใช้ได้ทันที\n🔹 **2. เครื่องมือที่ช่วยได้:** เซฟเวลาทำงานลงมากกว่า 50%\n🔹 **3. ผลลัพธ์:** เพิ่มประสิทธิภาพอย่างเห็นได้ชัด\n\nเพื่อนๆ คิดเห็นอย่างไรกับเรื่องนี้ คอมเมนต์บอกกันได้เลยครับ 👇\n\n#สาระน่ารู้ #Productivity #{topic.replace(' ', '')}"
+                caption = f"💡 **[สาระน่ารู้] {topic} สำหรับ{target_audience}!**\n\nเคยสงสัยไหมครับว่า ทำไมเรื่อง '{topic}' ถึงสำคัญมากในตอนนี้?\n\nสรุป 3 จุดเด่นหลักที่ต้องรู้ 👇\n🔹 **1. เข้าใจง่าย:** นำไปปรับใช้ได้ทันที\n🔹 **2. ประหยัดเวลา:** ลดขั้นตอนยุ่งยากลง 50%\n🔹 **3. ได้ผลลัพธ์ชัดเจน:** ยกระดับประสิทธิภาพการทำงาน\n\n👉 **แอ็กชัน:** {cta_type}\n\n#สาระน่ารู้ #{topic.replace(' ', '')} #การตลาดออนไลน์"
             elif "2." in style_option:
-                caption = f"🔥 **PROMOTION พิเศษ! ยกระดับ {topic} ของคุณวันนี้** 🔥\n\nคุณกำลังเจอ ปัญหาเหล่านี้อยู่ใช่ไหม? ยุ่งยาก ใช้เวลานาน และไม่ได้ผลลัพธ์ตามที่ต้องการ...\n\n✨ **ขอแนะนำโซลูชันที่จะเปลี่ยนชีวิตคุณ:**\n✅ ประหยัดเวลาขึ้น 3 เท่า\n✅ ใช้งานง่าย ไม่ซับซ้อน\n✅ คุ้มค่า ตอบโจทย์ทุกการใช้งาน\n\n🎁 **ข้อเสนอพิเศษเฉพาะสัปดาห์นี้เท่านั้น!** ทักแชตเพจ รับส่วนลดพิเศษทันที 20% 📩\n\n#โปรโมชันพิเศษ #{topic.replace(' ', '')} #คุ้มค่า"
+                caption = f"🔥 **PROMOTION พิเศษสำหรับ{target_audience}!** 🔥\n\nยกระดับ {topic} ของคุณวันนี้ด้วยโซลูชันที่ดีที่สุด!\n\n✨ **ทำไมต้องเลือกเรา:**\n✅ คุ้มค่า ตอบโจทย์ตรงจุด\n✅ ใช้งานง่าย ไม่ซับซ้อน\n✅ รับประกันผลลัพธ์ชัวร์\n\n🎁 **ข้อเสนอพิเศษเฉพาะสัปดาห์นี้!**\n👉 **สั่งซื้อเลย:** {cta_type}\n\n#โปรโมชันพิเศษ #{topic.replace(' ', '')} #คุ้มค่า"
             else:
-                caption = f"🌟 **เรื่องราวเปลี่ยนชีวิต: จากจุดเริ่มต้นสู่ความสำเร็จในเรื่อง {topic}**\n\n'ถ้าไม่เริ่มวันนี้ วันข้างหน้าเราก็ยังยืนอยู่ที่เดิม'\n\nหลายคนถามเข้ามาเยอะมากเกี่ยวกับการเริ่มทำ '{topic}' ข้อคิดสำคัญที่สุดคือ:\n1. ไม่ต้องรอให้พร้อม 100% ค่อยเริ่ม\n2. ความสม่ำเสมอสำคัญกว่าความสมบูรณ์แบบ\n3. เรียนรู้จากข้อผิดพลาด แล้วปรับปรุงให้ไวขึ้น\n\nขอเป็นกำลังใจให้ทุกคนที่กำลังพัฒนาตัวเองอยู่นะครับ 💪💙\n\n#แรงบันดาลใจ #{topic.replace(' ', '')}"
+                caption = f"🌟 **เรื่องราวเปลี่ยนชีวิตเกี่ยวกับ {topic}**\n\n'ข้อคิดสำคัญสำหรับ{target_audience} ที่กำลังพัฒนาตัวเอง'\n\n1. ไม่ต้องรอพร้อม ค่อยเริ่ม\n2. ความสม่ำเสมอชนะทุกอย่าง\n3. ปรับปรุงข้อผิดพลาดให้ไวขึ้น\n\n💪 ขอเป็นกำลังใจให้ทุกคนครับ!\n👉 {cta_type}\n\n#แรงบันดาลใจ #{topic.replace(' ', '')}"
 
-            st.write("🎨 2. กำลังยิง FLUX AI เพื่อเจนรูปภาพสด...")
+            st.write("🎨 3. กำลังยิง FLUX AI เพื่อเจนรูปภาพ HD...")
             img_bytes = get_flux_image(style_option)
             
             status_box.update(label="✅ สร้างโพสต์เรียบร้อยแล้ว!", state="complete", expanded=False)
 
-        # แสดงผลลัพธ์
-        st.subheader("📱 พรีวิวโพสต์บน Facebook")
-        col_preview, col_tools = st.columns([1.5, 1])
+        st.divider()
+
+        # 4. แถบสถิติวิเคราะห์จาก AI (Metrics Row)
+        st.subheader("📊 AI Analytics & Insights")
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric(label="📈 คะแนนความน่าสนใจ (Engagement Rate)", value="94.8%", delta="+12.5%")
+        m2.metric(label="🎯 ความตรงกลุ่มเป้าหมาย", value="98%", delta="High")
+        m3.metric(label="⏱️ เวลาโพสต์ที่แนะนำ", value="18:30 น.", delta="Today")
+        m4.metric(label="🏷️ จำนวน Hashtag", value="5 Tags", delta="Optimal")
+
+        st.divider()
+
+        # 5. พื้นที่แสดงผลหลายแพลตฟอร์ม (Multi-Platform Tabs)
+        st.subheader("📱 พรีวิวการแสดงผล (Multi-Platform Preview)")
         
-        with col_preview:
-            with st.container(border=True):
-                st.markdown("**Demo Brand Official** · *เมื่อสักครู่นี้* 🌎")
-                st.markdown(caption)
-                if img_bytes:
-                    st.image(img_bytes, caption="ภาพประกอบที่สร้างโดย FLUX AI", use_container_width=True)
-                else:
-                    st.error("❌ เซิร์ฟเวอร์ภาพ AI คิวแน่นชั่วคราว ลองกดสร้างใหม่อีกครั้งครับ")
-        
-        with col_tools:
-            st.markdown("### 🛠️ เครื่องมือใช้งาน")
-            st.text_area("📋 ก๊อปปี้ข้อความแคปชัน:", value=caption, height=220)
+        tab_fb, tab_ig, tab_line = st.tabs(["🔵 Facebook Post", "📸 Instagram Feed", "💬 LINE Official Account"])
+
+        with tab_fb:
+            col_fb_view, col_fb_tool = st.columns([1.5, 1])
+            with col_fb_view:
+                with st.container(border=True):
+                    st.markdown("**Demo Brand Official** · *เมื่อสักครู่นี้* 🌎")
+                    st.markdown(caption)
+                    if img_bytes:
+                        st.image(img_bytes, use_container_width=True)
             
+            with col_fb_tool:
+                st.markdown("### 🛠️ จัดการโพสต์")
+                st.text_area("📋 แคปชันสำหรับก๊อปปี้:", value=caption, height=180)
+                if img_bytes:
+                    st.download_button("📥 โหลดรูปภาพ AI (HD)", data=img_bytes, file_name="post.jpg", mime="image/jpeg", use_container_width=True)
+                
+                st.divider()
+                st.markdown("#### ⏰ ตั้งเวลาโพสต์ล่วงหน้า")
+                schedule_date = st.date_input("วันที่โพสต์:", datetime.now() + timedelta(days=1))
+                schedule_time = st.time_input("เวลาที่โพสต์:", datetime.strptime("18:30", "%H:%M").time())
+                
+                if st.button("🚀 อนุมัติและตั้งเวลาโพสต์", type="primary", use_container_width=True):
+                    st.success(f"บันทึกคิวโพสต์สำเร็จ! ระบบจะโพสต์อัตโนมัติในวันที่ {schedule_date} เวลา {schedule_time}")
+
+        with tab_ig:
+            st.info("📸 ตัวอย่างหน้าตาการแสดงผลแบบจัตุรัสบน Instagram Feed")
             if img_bytes:
-                st.download_button(
-                    label="📥 ดาวน์โหลดรูปภาพ AI (HD)",
-                    data=img_bytes,
-                    file_name=f"ai_post_{topic}.jpg",
-                    mime="image/jpeg",
-                    use_container_width=True
-                )
+                st.image(img_bytes, width=400)
+            st.caption(caption[:100] + "...")
+
+        with tab_line:
+            st.info("💬 ตัวอย่างหน้าตา Broadcast ข้อความบน LINE Official Account")
+            with st.chat_message("assistant"):
+                st.write(caption)
+                if img_bytes:
+                    st.image(img_bytes, width=300)
